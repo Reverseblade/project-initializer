@@ -13,7 +13,7 @@ def create():
 
     browser = webdriver.Chrome('./chromedriver')
     browser.get('http://github.com/login')
-    path = "~/Code/projects/"
+    path = PROJECT_PATH 
     project_name = str(sys.argv[1])
 
     try:
@@ -36,7 +36,7 @@ def create():
     python_button.submit()
     time.sleep(1)
     browser.quit()
-    print('Info: New Github repository "' + project_name + '" reated')
+    print('Info: New Github repository "' + project_name + '"created')
 
 if __name__ == "__main__":
     create()
