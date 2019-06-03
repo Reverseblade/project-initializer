@@ -13,7 +13,7 @@ def create():
 
     browser = webdriver.Chrome('./chromedriver')
     browser.get('http://github.com/login')
-    path = "/Users/reverseblade/Code/projects/"
+    path = "~/Code/projects/"
     project_name = str(sys.argv[1])
 
     try:
