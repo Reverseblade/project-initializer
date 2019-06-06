@@ -1,42 +1,54 @@
 import os
 import sys
-import time
+from time import sleep
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 
 from config import *
 
-def create():
-    if len(sys.argv) <= 1:
-        print('Error: Please enter a project name')
-        raise Exception
+from pages import LoginPage
+from pages import CreateRepositoryPage
 
-    browser = webdriver.Chrome('./chromedriver')
-    browser.get('http://github.com/login')
-    path = PROJECT_PATH 
-    project_name = str(sys.argv[1])
+import logging
+logging.basicConfig(level=logging.INFO)
 
-    try:
-        dir_name = path + str(sys.argv[1])
-        os.mkdir(path + str(sys.argv[1]))
-        print("Directory " , project_name ,  " created ") 
-    except FileExistsError:
-        print("Directory " , project_name ,  " already exists")
+if len(sys.argv) <= 1:
+    raise Exception('Please enter a project name')
 
-    python_button = browser.find_elements_by_xpath("//input[@name='login']")[0]
-    python_button.send_keys(USERNAME)
-    python_button = browser.find_elements_by_xpath("//input[@name='password']")[0]
-    python_button.send_keys(PASSWORD)
-    python_button = browser.find_elements_by_xpath("//input[@name='commit']")[0]
-    python_button.click()
-    browser.get('https://github.com/new')
-    python_button = browser.find_elements_by_xpath("//input[@name='repository[name]']")[0]
-    python_button.send_keys(project_name)
-    python_button = browser.find_element_by_css_selector('button.first-in-line')
-    python_button.submit()
-    time.sleep(1)
-    browser.quit()
-    print('Info: New Github repository "' + project_name + '"created')
+project_name = str(sys.argv[1])
 
-if __name__ == "__main__":
-    create()
+try:
+    os.mkdir(PROJECT_PATH + project_name)
+    logging.info("Directory {} created".format(project_name))
+    print()
+except FileExistsError:
+    raise FileExistsError("Directory " + project_name + " already exists")
+
+# Log in to Github
+driver = webdriver.Chrome('./chromedriver')
+login_page = LoginPage(driver)
+login_page.open()
+login_page.username_input.type(GITHUB_USERNAME)
+login_page.password_input.type(GITHUB_PASSWORD)
+login_page.submit_button.click()
+
+# Create a new repository
+create_repository_page = CreateRepositoryPage(driver)
+create_repository_page.open()
+create_repository_page.repository_name_input.type(project_name)
+
+try:
+    create_repository_page.submit_button.click()
+except TimeoutException:
+    raise TimeoutException('The repository {} already exists on this account'.format(project_name))
+
+# Check if a new repository was created
+current_url = create_repository_page.driver.current_url
+new_repository_url = 'https://github.com/{0}/{1}'.format(GITHUB_USERNAME, project_name)
+create_repository_page.close()
+
+if current_url != new_repository_url:
+    raise Exception('Failed to create a new Github repository')
+else:
+    logging.info('New Github repository {} created'.format(project_name))
