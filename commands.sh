@@ -1,25 +1,31 @@
 #!/bin/bash
 
-INITIALIZER_PATH=~/Code/others/commands/project_initializer/
-PROJECT_PATH=~/Code/projects/
-GITHUB_ACCOUNT=Reverseblade
+SCRIPT_PATH="$(cd $(dirname $BASH_SOURCE); pwd)"
+PROJECT_PATH=
+GITHUB_ACCOUNT=
+EDITOR='Visual Studio Code'
 
-function create() {
-    cd ${INITIALIZER_PATH} 
-    if python create.py $1; then
-        if [ -e ${PROJECT_PATH}$1 ]; then
-            cd ${PROJECT_PATH}$1 
-            git init
-            git remote add origin https://github.com/${GITHUB_ACCOUNT}/$1.git
-            touch README.md
-            echo '#' $1 > README.md
-            git add .
-            git commit -m "Initial commit"
-            git push -u origin master
-            code .
-            echo 'Success: Successfully created a new project!'
-        else
-            echo 'Error: project named' $1 'does not exist'
-        fi
+function create() { 
+    set -e
+    cd ${SCRIPT_PATH} 
+    if [ ! -d ${PROJECT_PATH}$1 ]; then
+        mkdir ${PROJECT_PATH}$1 
+        echo "created new directory named $1"
+    fi
+    if python github_repository_initializer/create_repository.py $1 ; then
+        cd ${PROJECT_PATH}$1 
+        git init
+        echo 'Initialized Git'
+        git remote add origin https://github.com/${GITHUB_ACCOUNT}/$1.git
+        echo 'Added remote origin'
+        touch README.md
+        echo '#' $1 > README.md
+        git add README.md
+        git commit -m "initial commit"
+        git push -u origin master
+        open -a "${EDITOR}" .
+        git checkout -b develop
+        echo 'Opened project in editor'
+        echo 'Project initialization complete!'
     fi   
 }
