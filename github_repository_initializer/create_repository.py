@@ -62,7 +62,7 @@ except TimeoutException:
     raise TimeoutException('The repository named {} already exists \
                            on this account'.format(project_name))
 
-if create_repository_page.has_veryify_error_text == True:
+if create_repository_page.has_verify_error_text == True:
     auth_code = input('Enter your verification code: ')
     two_way_auth_page = TwoWayAuthenticationPage(login_page.driver)
     two_way_auth_page.input_box.type(auth_code)

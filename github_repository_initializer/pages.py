@@ -11,6 +11,7 @@ from locators import TwoWayAuthenticationPageLocator
 from elements import BaseElement
 from elements import InputElement
 
+
 class BasePage:
 
     def __init__(self, driver=None, url=None):
@@ -83,7 +84,7 @@ class CreateRepositoryPage(BasePage):
         url = config.GITHUB_CREATE_REPOSITORY_PAGE_URL
         super().__init__(driver=driver, url=url)
 
-    def has_veryify_error_text(self):
+    def has_verify_error_text(self):
         count = CreateRepositoryPageLocator.driver.find_elements(
             By.XPATH,
             CreateRepositoryPageLocator.verify_error_message
