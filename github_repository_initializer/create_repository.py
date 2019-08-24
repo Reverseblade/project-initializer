@@ -1,15 +1,15 @@
 import os
 import sys
-from time import sleep
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 
-from config import *
+import config
 
 from pages import LoginPage
 from pages import CreateRepositoryPage
+from pages import TwoWayAuthenticationPage
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +21,7 @@ project_name = str(sys.argv[1])
 
 # set driver
 chrome_options = Options()
-if IS_HEADLESS:
+if config.IS_HEADLESS:
     chrome_options.add_argument("--headless")
 
 executable_path = os.path.join(
@@ -34,17 +34,26 @@ driver = webdriver.Chrome(
         options=chrome_options
     )
 
-# log in to Github
+# login to Github
 login_page = LoginPage(driver)
 login_page.open()
-login_page.username_input.type(GITHUB_USERNAME)
-login_page.password_input.type(GITHUB_PASSWORD)
+login_page.username_input.type(config.GITHUB_USERNAME)
+login_page.password_input.type(config.GITHUB_PASSWORD)
 login_page.submit_button.click()
-logging.info('Logged in to Github')
+logging.info('Logged in to Github OK!')
+
+# two-way authentication
+if config.HAS_TWO_WAY_AUTHENTICATION:
+    auth_code = input('Enter your verification code: ')
+    two_way_auth_page = TwoWayAuthenticationPage(login_page.driver)
+    two_way_auth_page.input_box.type(auth_code)
+    two_way_auth_page.verify_button.click()
+    logging.info('two-way authentication OK!')
 
 # create a new repository
 create_repository_page = CreateRepositoryPage(driver)
 create_repository_page.open()
+create_repository_page.select_private_radio.click()
 create_repository_page.repository_name_input.type(project_name)
 
 try:
@@ -53,10 +62,17 @@ except TimeoutException:
     raise TimeoutException('The repository named {} already exists \
                            on this account'.format(project_name))
 
-# check if new repository created
+if create_repository_page.has_veryify_error_text == True:
+    auth_code = input('Enter your verification code: ')
+    two_way_auth_page = TwoWayAuthenticationPage(login_page.driver)
+    two_way_auth_page.input_box.type(auth_code)
+    two_way_auth_page.verify_button.click()
+    logging.info('two-way authentication OK!')
+
 current_url = create_repository_page.driver.current_url
+
 new_repository_url = 'https://github.com/{0}/{1}'.format(
-        GITHUB_USERNAME,
+        config.GITHUB_USERNAME,
         project_name
     )
 
